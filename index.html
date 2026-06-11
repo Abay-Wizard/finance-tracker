@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finance Tracker</title>
+  <link rel="stylesheet" href="styles/base.css" />
+  <link rel="stylesheet" href="styles/layout.css" />
+  <link rel="stylesheet" href="styles/responsive.css" />
+</head>
+<body>
+  <!-- Skip link: first focusable element, jumps to <main> -->
+  <a href="#main" class="skip-link">Skip to content</a>
+
+  <header>
+    <h1>Finance Tracker</h1>
+    <nav aria-label="Primary">
+      <!-- TODO: in-page links to #dashboard, #records, #form, #settings, #about -->
+    </nav>
+  </header>
+
+  <main id="main">
+    <!-- Global live regions for status/announcements (cap, save, errors) -->
+    <div id="live-status" role="status" aria-live="polite"></div>
+    <div id="live-alert" role="alert" aria-live="assertive"></div>
+
+    <section id="dashboard" aria-labelledby="dashboard-h">
+      <h2 id="dashboard-h">Dashboard</h2>
+      <!-- TODO: total records, sum, top category, last-7-days mini chart -->
+    </section>
+
+    <section id="records" aria-labelledby="records-h">
+      <h2 id="records-h">Records</h2>
+      <!-- TODO: search input (regex), case-insensitive toggle, sort controls -->
+      <!-- TODO: <table> on desktop / cards on mobile; render target container -->
+    </section>
+
+    <section id="form" aria-labelledby="form-h">
+      <h2 id="form-h">Add / Edit Record</h2>
+      <!-- TODO: <form> with labelled inputs: description, amount, category, date -->
+      <!-- Each input gets aria-describedby pointing to its error <span> -->
+    </section>
+
+    <section id="settings" aria-labelledby="settings-h">
+      <h2 id="settings-h">Settings</h2>
+      <!-- TODO: numeric cap, base currency + 2 rates, import/export buttons -->
+    </section>
+
+    <section id="about" aria-labelledby="about-h">
+      <h2 id="about-h">About</h2>
+      <!-- TODO: purpose + your contact (GitHub, email) -->
+    </section>
+  </main>
+
+  <footer>
+    <!-- TODO: copyright / links -->
+  </footer>
+
+  <script type="module" src="scripts/app.js"></script>
+</body>
+</html>

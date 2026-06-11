@@ -1,0 +1,12 @@
+/* responsive.css — mobile-first media queries */
+/* Base styles (in base/layout) target ~360px mobile first. */
+
+/* Tablet */
+@media (min-width: 768px) {
+  /* TODO */
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  /* TODO: switch records from cards to full table here */
+}

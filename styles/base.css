@@ -1,0 +1,13 @@
+/* base.css — reset, CSS variables, typography, focus styles */
+
+/* TODO: CSS custom properties (colors, spacing, radius) in :root */
+/* :root { --bg: ; --text: ; --accent: ; ... } */
+
+/* TODO: minimal reset (box-sizing, margin) */
+
+/* TODO: typography (font stack, base size, line-height) */
+
+/* TODO: visible focus style for ALL interactive elements (a11y requirement) */
+/* :focus-visible { outline: ...; } */
+
+/* TODO: .skip-link — visually hidden until focused, then visible */

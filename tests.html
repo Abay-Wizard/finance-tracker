@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8" /><title>Tests</title></head>
+<body>
+  <h1>Tests</h1>
+  <pre id="out"></pre>
+  <script type="module">
+    import { RULES } from './scripts/validators.js';
+    // import { compileRegex } from './scripts/search.js'; etc.
+
+    const out = document.getElementById('out');
+    let pass = 0, fail = 0;
+    function assert(name, cond) {
+      out.textContent += `${cond ? '\u2705' : '\u274C'} ${name}\n`;
+      cond ? pass++ : fail++;
+    }
+
+    // TODO: write assertions, e.g.
+    // assert('amount accepts 12.50', RULES.amount.test('12.50'));
+    // assert('amount rejects 12.500', !RULES.amount.test('12.500'));
+
+    out.textContent += `\n${pass} passed, ${fail} failed`;
+  </script>
+</body>
+</html>
