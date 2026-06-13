@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Finance Tracker</title>
+
+  <!-- Type: Space Grotesk (display), Inter (body), JetBrains Mono (figures) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+
   <link rel="stylesheet" href="styles/base.css" />
   <link rel="stylesheet" href="styles/layout.css" />
   <link rel="stylesheet" href="styles/responsive.css" />
@@ -12,48 +18,227 @@
   <!-- Skip link: first focusable element, jumps to <main> -->
   <a href="#main" class="skip-link">Skip to content</a>
 
-  <header>
-    <h1>Finance Tracker</h1>
-    <nav aria-label="Primary">
-      <!-- TODO: in-page links to #dashboard, #records, #form, #settings, #about -->
+  <header class="site-header">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">€$</span>
+      <h1>Finance Tracker</h1>
+    </div>
+    <nav aria-label="Primary" class="primary-nav">
+      <a href="#dashboard">Dashboard</a>
+      <a href="#records">Records</a>
+      <a href="#form">Add record</a>
+      <a href="#settings">Settings</a>
+      <a href="#about">About</a>
     </nav>
   </header>
 
   <main id="main">
     <!-- Global live regions for status/announcements (cap, save, errors) -->
-    <div id="live-status" role="status" aria-live="polite"></div>
-    <div id="live-alert" role="alert" aria-live="assertive"></div>
+    <div id="live-status" role="status" aria-live="polite" class="sr-only"></div>
+    <div id="live-alert" role="alert" aria-live="assertive" class="sr-only"></div>
 
-    <section id="dashboard" aria-labelledby="dashboard-h">
-      <h2 id="dashboard-h">Dashboard</h2>
-      <!-- TODO: total records, sum, top category, last-7-days mini chart -->
+    <!-- DASHBOARD ------------------------------------------------------- -->
+    <section id="dashboard" class="section" aria-labelledby="dashboard-h">
+      <div class="section-head">
+        <h2 id="dashboard-h">Dashboard</h2>
+        <label class="inline-field">
+          <span>View in</span>
+          <select id="display-currency" aria-label="Display currency"></select>
+        </label>
+      </div>
+
+      <div class="stat-grid">
+        <article class="stat-card">
+          <p class="stat-label">Records</p>
+          <p class="stat-value mono" id="stat-count">0</p>
+        </article>
+
+        <article class="stat-card" id="stat-sum-card">
+          <p class="stat-label">Total spent</p>
+          <p class="stat-value figure" id="stat-sum">0.00</p>
+          <p class="stat-foot" id="stat-cap-note"></p>
+        </article>
+
+        <article class="stat-card">
+          <p class="stat-label">Top category</p>
+          <p class="stat-value" id="stat-top">—</p>
+          <p class="stat-foot figure" id="stat-top-amount"></p>
+        </article>
+
+        <article class="stat-card chart-card">
+          <p class="stat-label">Last 7 days</p>
+          <div class="chart-wrap" id="chart" aria-hidden="true"></div>
+          <p class="sr-only" id="chart-text"></p>
+        </article>
+      </div>
     </section>
 
-    <section id="records" aria-labelledby="records-h">
-      <h2 id="records-h">Records</h2>
-      <!-- TODO: search input (regex), case-insensitive toggle, sort controls -->
-      <!-- TODO: <table> on desktop / cards on mobile; render target container -->
+    <!-- RECORDS --------------------------------------------------------- -->
+    <section id="records" class="section" aria-labelledby="records-h">
+      <div class="section-head">
+        <h2 id="records-h">Records</h2>
+        <p class="count-pill"><span id="results-count">0</span> shown</p>
+      </div>
+
+      <div class="controls">
+        <div class="field grow">
+          <label for="search">Search <span class="hint">(regular expression)</span></label>
+          <input type="text" id="search" inputmode="search"
+                 placeholder="e.g. ^coffee|grocer"
+                 aria-describedby="search-err" autocomplete="off" />
+          <span class="error" id="search-err" role="status"></span>
+        </div>
+
+        <label class="check">
+          <input type="checkbox" id="search-ci" checked />
+          <span>Ignore case</span>
+        </label>
+
+        <div class="field">
+          <label for="sort-field">Sort by</label>
+          <select id="sort-field">
+            <option value="date">Date</option>
+            <option value="amount">Amount</option>
+            <option value="description">Description</option>
+            <option value="category">Category</option>
+          </select>
+        </div>
+
+        <button type="button" id="sort-dir" class="btn ghost" aria-pressed="false"
+                aria-label="Sort descending">↓ Desc</button>
+      </div>
+
+      <div id="records-host"><!-- table / cards rendered here --></div>
     </section>
 
-    <section id="form" aria-labelledby="form-h">
-      <h2 id="form-h">Add / Edit Record</h2>
-      <!-- TODO: <form> with labelled inputs: description, amount, category, date -->
-      <!-- Each input gets aria-describedby pointing to its error <span> -->
+    <!-- FORM ------------------------------------------------------------ -->
+    <section id="form" class="section" aria-labelledby="form-h">
+      <h2 id="form-h">Add / edit record</h2>
+
+      <form id="record-form" novalidate>
+        <input type="hidden" id="record-id" />
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="f-desc">Description</label>
+            <input type="text" id="f-desc" name="description" maxlength="120"
+                   aria-describedby="f-desc-err" required />
+            <span class="error" id="f-desc-err"></span>
+          </div>
+
+          <div class="field">
+            <label for="f-amount">Amount</label>
+            <input type="text" id="f-amount" name="amount" inputmode="decimal"
+                   aria-describedby="f-amount-err" required />
+            <span class="error" id="f-amount-err"></span>
+          </div>
+
+          <div class="field">
+            <label for="f-category">Category</label>
+            <input type="text" id="f-category" name="category" list="category-list"
+                   maxlength="40" aria-describedby="f-category-err" required />
+            <datalist id="category-list">
+              <option value="Groceries"></option>
+              <option value="Rent"></option>
+              <option value="Transport"></option>
+              <option value="Utilities"></option>
+              <option value="Dining"></option>
+              <option value="Health"></option>
+              <option value="Entertainment"></option>
+              <option value="Savings"></option>
+              <option value="Income"></option>
+            </datalist>
+            <span class="error" id="f-category-err"></span>
+          </div>
+
+          <div class="field">
+            <label for="f-date">Date</label>
+            <input type="date" id="f-date" name="date"
+                   aria-describedby="f-date-err" required />
+            <span class="error" id="f-date-err"></span>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn primary" id="form-submit">Add record</button>
+          <button type="button" class="btn ghost" id="form-reset">Clear</button>
+          <span class="form-mode" id="form-mode" aria-hidden="true"></span>
+        </div>
+      </form>
     </section>
 
-    <section id="settings" aria-labelledby="settings-h">
+    <!-- SETTINGS -------------------------------------------------------- -->
+    <section id="settings" class="section" aria-labelledby="settings-h">
       <h2 id="settings-h">Settings</h2>
-      <!-- TODO: numeric cap, base currency + 2 rates, import/export buttons -->
+
+      <form id="settings-form" novalidate>
+        <div class="settings-grid">
+          <div class="field">
+            <label for="s-cap">Spending cap</label>
+            <input type="text" id="s-cap" inputmode="decimal"
+                   aria-describedby="s-cap-help s-cap-err" />
+            <span class="hint" id="s-cap-help">Warns you when the total crosses this. 0 = off.</span>
+            <span class="error" id="s-cap-err"></span>
+          </div>
+
+          <fieldset class="currency-block">
+            <legend>Currencies &amp; rates</legend>
+            <p class="hint">Rate = units per 1 base unit. Base rate is fixed at 1.</p>
+
+            <div class="rate-row">
+              <label for="s-base">Base</label>
+              <input type="text" id="s-base" maxlength="6" class="code" aria-label="Base currency code" />
+              <input type="text" value="1" disabled class="rate" aria-label="Base rate" />
+            </div>
+
+            <div class="rate-row">
+              <input type="text" id="s-alt1-code" maxlength="6" class="code" aria-label="Second currency code" />
+              <input type="text" id="s-alt1-rate" inputmode="decimal" class="rate" aria-label="Second currency rate" />
+            </div>
+
+            <div class="rate-row">
+              <input type="text" id="s-alt2-code" maxlength="6" class="code" aria-label="Third currency code" />
+              <input type="text" id="s-alt2-rate" inputmode="decimal" class="rate" aria-label="Third currency rate" />
+            </div>
+            <span class="error" id="s-rate-err"></span>
+          </fieldset>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn primary">Save settings</button>
+        </div>
+      </form>
+
+      <div class="data-actions">
+        <button type="button" class="btn ghost" id="export-btn">Export data (JSON)</button>
+        <label class="btn ghost file-btn">
+          Import data
+          <input type="file" id="import-input" accept="application/json,.json" hidden />
+        </label>
+        <button type="button" class="btn danger ghost" id="clear-btn">Delete all records</button>
+      </div>
     </section>
 
-    <section id="about" aria-labelledby="about-h">
+    <!-- ABOUT ----------------------------------------------------------- -->
+    <section id="about" class="section" aria-labelledby="about-h">
       <h2 id="about-h">About</h2>
-      <!-- TODO: purpose + your contact (GitHub, email) -->
+      <p class="prose">
+        A small, private ledger for tracking what you spend. Everything lives in this
+        browser only — no account, no server, no tracking. Add records, search them with
+        regular expressions, set a cap to keep yourself honest, and export your data any
+        time you want to take it elsewhere.
+      </p>
+      <p class="prose contact">
+        Built by <strong>you</strong>.
+        <a href="https://github.com/your-handle" rel="noopener">https://github.com/Abay-Wizard</a> ·
+        <a href="a.tessema@alustudent.com">a.tessema@alustudent.com</a>
+      </p>
     </section>
   </main>
 
-  <footer>
-    <!-- TODO: copyright / links -->
+  <footer class="site-footer">
+    <p>Finance Tracker · your data stays in your browser</p>
+    <p class="mono">© <span id="year"></span></p>
   </footer>
 
   <script type="module" src="scripts/app.js"></script>

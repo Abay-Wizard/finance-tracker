@@ -1,13 +1,212 @@
-/* base.css — reset, CSS variables, typography, focus styles */
+:root {
+  /* paper & ink */
+  --bg:        #F1F4F0;   /* cool off-white paper, not cream */
+  --surface:   #FFFFFF;
+  --surface-2: #FAFBF9;
+  --text:      #15241F;   /* deep pine — primary text  (16.1:1 on surface) */
+  --ink:       #15241F;   /* alias of --text for existing selectors */
+  --ink-soft:  #44544E;   /* labels                    (8.0:1 on surface)  */
+  --muted:     #5A6862;   /* hints, captions           (5.85:1 on surface) */
+  --line:      #DEE5DD;   /* hairline dividers (decorative)                */
+  --line-2:    #CBD4C9;   /* stronger dividers (decorative)                */
+  --field-border: #889389;/* form-control boundary  (3.19:1 on white)      */
 
-/* TODO: CSS custom properties (colors, spacing, radius) in :root */
-/* :root { --bg: ; --text: ; --accent: ; ... } */
+  /* accents */
+  --accent:    #0E5C56;   /* primary action / teal     (7.82:1 on white)   */
+  --teal:      #0E5C56;   /* alias of --accent                              */
+  --teal-700:  #0A463F;   /* hover / strong            (10.7:1 on white)   */
+  --teal-50:   #E4F0EE;
+  --gold:      #86600F;   /* the ledger figures        (5.69:1 on white)   */
+  --gold-soft: #F2E6C8;
+  --danger:    #A8362F;   /* errors                    (6.49:1 on white)   */
+  --danger-soft:#F6E3E1;
+  --ok:        #2E7D5B;   /* positive amounts          (5.0:1 on white)    */
 
-/* TODO: minimal reset (box-sizing, margin) */
+  /* spacing scale */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --gap:     clamp(0.9rem, 2vw, 1.4rem);
 
-/* TODO: typography (font stack, base size, line-height) */
+  /* radius & geometry */
+  --r:    10px;
+  --r-sm: 7px;
+  --maxw: 1080px;
 
-/* TODO: visible focus style for ALL interactive elements (a11y requirement) */
-/* :focus-visible { outline: ...; } */
+  /* type */
+  --font-display: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --font-body:    'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
 
-/* TODO: .skip-link — visually hidden until focused, then visible */
+  --step--1: 0.82rem;
+  --step-0:  1rem;
+  --step-1:  1.18rem;
+  --step-2:  1.5rem;
+  --step-3:  2.05rem;
+
+  /* effects */
+  --shadow: 0 1px 2px rgba(21,36,31,.05), 0 8px 24px -16px rgba(21,36,31,.25);
+  --focus-width: 2px;
+  --focus-color: var(--accent);   /* 7.82:1 on white, 7.06:1 on paper -> >3:1 */
+}
+
+/* ---- minimal reset ---------------------------------------------------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body,
+h1, h2, h3, p, figure, fieldset, legend, ul, ol {
+  margin: 0;
+}
+
+img, svg { display: block; max-width: 100%; }
+
+/* ---- typography ------------------------------------------------------- */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--step-0);   /* 16px base */
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, legend {
+  font-family: var(--font-display);
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+h1 { font-size: var(--step-2); font-weight: 600; }
+h2 { font-size: var(--step-3); font-weight: 600; }
+h3 { font-size: var(--step-1); font-weight: 600; }
+
+a { color: var(--accent); text-underline-offset: 2px; }
+a:hover { color: var(--teal-700); }
+
+/* the signature: monetary figures in mono, aligned */
+.mono   { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.figure {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: 2px;
+  border-radius: var(--r-sm);
+}
+
+/* labels that wrap a visually-hidden control (e.g. the file-import button)
+   show the ring when that control is focused */
+.file-btn:focus-within {
+  outline: var(--focus-width) solid var(--focus-color);
+  outline-offset: 2px;
+}
+
+/* text inputs also tint their border on focus, in addition to the outline */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible { border-color: var(--accent); }
+
+/* checkboxes/radios adopt the brand colour */
+input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
+
+/* ---- .skip-link: hidden until focused, then visible ------------------- */
+.skip-link {
+  position: absolute;
+  left: var(--space-3);
+  top: -3rem;                       /* parked off-screen */
+  z-index: 100;
+  background: var(--text);
+  color: #fff;
+  padding: 0.55rem 0.9rem;
+  border-radius: var(--r-sm);
+  font-weight: 600;
+  text-decoration: none;
+  transition: top .15s ease;
+}
+.skip-link:focus { top: var(--space-3); color: #fff; }
+
+
+label { font-size: var(--step--1); font-weight: 600; color: var(--ink-soft); }
+
+input, select, button { font: inherit; color: inherit; }
+
+input[type="text"],
+input[type="date"],
+input[type="search"],
+select {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--field-border);
+  border-radius: var(--r-sm);
+  color: var(--text);
+  transition: border-color .12s ease;
+}
+input::placeholder { color: var(--muted); }
+
+/* error state on a field */
+input[aria-invalid="true"] {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+
+.hint  { display: block; font-size: var(--step--1); font-weight: 400; color: var(--muted); }
+.error {
+  display: block;
+  min-height: 1.1em;
+  margin-top: var(--space-1);
+  font-size: var(--step--1);
+  font-weight: 500;
+  color: var(--danger);
+}
+
+/* buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--r-sm);
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--step--1);
+  cursor: pointer;
+  background: var(--surface);
+  color: var(--text);
+  transition: background .12s ease, border-color .12s ease, transform .06s ease;
+}
+.btn:active { transform: translateY(1px); }
+.btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+.btn.primary:hover { background: var(--teal-700); }
+.btn.ghost { background: var(--surface); border-color: var(--line-2); color: var(--ink-soft); }
+.btn.ghost:hover { border-color: var(--accent); color: var(--accent); }
+.btn.danger { color: var(--danger); }
+.btn.danger:hover { border-color: var(--danger); color: var(--danger); background: var(--danger-soft); }
+.btn[aria-pressed="true"] { background: var(--teal-50); border-color: var(--accent); color: var(--teal-700); }
+
+/* ---- utilities -------------------------------------------------------- */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* ---- motion ----------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
