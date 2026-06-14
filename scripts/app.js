@@ -1,10 +1,9 @@
-import * as state from './state.js';
-import * as ui from './ui.js';
+import * as state from "./state.js";
+import { start } from "./ui.js";
 
-function main() {
+function boot() {
   state.init();
-  ui.bindEvents();
-  ui.refresh();
+  start();
 }
 
-document.addEventListener('DOMContentLoaded', main);
+document.addEventListener("DOMContentLoaded", boot);
