@@ -1,12 +1,55 @@
-/* responsive.css — mobile-first media queries */
-/* Base styles (in base/layout) target ~360px mobile first. */
-
-/* Tablet */
-@media (min-width: 768px) {
-  /* TODO */
+@media (max-width: 1024px) {
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .form-grid { grid-template-columns: 1fr 1fr; }
+  .settings-grid { grid-template-columns: 1fr; }
 }
 
-/* Desktop */
-@media (min-width: 1024px) {
-  /* TODO: switch records from cards to full table here */
+/* ---- <= 768px : mobile — single column, table -> cards ---------------- */
+@media (max-width: 768px) {
+  .site-header { position: static; }
+  .primary-nav { width: 100%; overflow-x: auto; }
+
+  .stat-grid { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: 1fr; }
+
+  .controls { align-items: stretch; }
+  .controls .field.grow { flex-basis: 100%; }
+  #sort-dir, .check { align-self: flex-start; }
+
+  /* ledger -> cards */
+  .ledger thead { display: none; }
+  .ledger, .ledger tbody, .ledger tr, .ledger td { display: block; width: 100%; }
+  .ledger tr {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: var(--r-sm);
+    padding: 0.7rem 0.9rem;
+    margin-bottom: 0.7rem;
+  }
+  .ledger tbody td {
+    border: none;
+    padding: 0.2rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+  .ledger tbody td::before {
+    content: attr(data-label);
+    font-size: var(--step--1);
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .amount-fig { border-left: none; padding-left: 0; }
+  .row-actions { justify-content: flex-start; }
+  .ledger td.actions::before { content: ""; }
+}
+
+/* ---- <= 360px : small phones — tighten currency rows and spacing ------ */
+@media (max-width: 360px) {
+  main { padding-left: 0.8rem; padding-right: 0.8rem; }
+  .rate-row { grid-template-columns: 3.5rem 1fr 1fr; gap: 0.35rem; }
+  .data-actions .btn { flex: 1 1 100%; justify-content: center; }
 }
