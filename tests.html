@@ -1,25 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="UTF-8" /><title>Tests</title></head>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finance Tracker — Tests</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <style>
+    :root { --ok:#2E7D5B; --bad:#A8362F; --ink:#15241F; --muted:#5A6862; --line:#DEE5DD; }
+    body { font:16px/1.5 system-ui, sans-serif; color:var(--ink); margin:0; background:#F1F4F0; }
+    main { max-width:760px; margin:0 auto; padding:2rem 1.25rem 4rem; }
+    h1 { font-size:1.5rem; margin:0 0 .25rem; }
+    .summary { font-family:ui-monospace,monospace; font-weight:700; margin:.5rem 0 1.5rem; padding:.6rem .9rem;
+               border-radius:8px; background:#fff; border:1px solid var(--line); }
+    .summary.green { color:var(--ok); } .summary.red { color:var(--bad); }
+    h2 { font-size:1rem; margin:1.4rem 0 .4rem; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; }
+    .row { display:flex; gap:.6rem; padding:.35rem .6rem; border-bottom:1px solid var(--line); font-size:.92rem; }
+    .tag { font-family:ui-monospace,monospace; font-weight:700; }
+    .pass .tag { color:var(--ok); } .fail .tag { color:var(--bad); }
+    .fail { background:#F6E3E1; }
+  </style>
+</head>
 <body>
-  <h1>Tests</h1>
-  <pre id="out"></pre>
-  <script type="module">
-    import { RULES } from './scripts/validators.js';
-    // import { compileRegex } from './scripts/search.js'; etc.
+  <main>
+    <h1>Finance Tracker — Test Suite</h1>
+    <p>Run over HTTP (e.g. <code>python3 -m http.server</code>) so the ES modules load.</p>
+    <div id="summary" class="summary">Running…</div>
+    <div id="results"></div>
+  </main>
 
-    const out = document.getElementById('out');
-    let pass = 0, fail = 0;
-    function assert(name, cond) {
-      out.textContent += `${cond ? '\u2705' : '\u274C'} ${name}\n`;
+  <script type="module">
+    import * as V from './scripts/validators.js';
+    import * as S from './scripts/search.js';
+    import * as ST from './scripts/storage.js';
+    import * as state from './scripts/state.js';
+
+    const results = document.getElementById('results');
+    let pass = 0, fail = 0, group = '';
+
+    function section(name) {
+      group = name;
+      results.append(Object.assign(document.createElement('h2'), { textContent: name }));
+    }
+    function ok(name, cond) {
       cond ? pass++ : fail++;
+      const row = document.createElement('div');
+      row.className = 'row ' + (cond ? 'pass' : 'fail');
+      const tag = Object.assign(document.createElement('span'), { className: 'tag', textContent: cond ? 'PASS' : 'FAIL' });
+      const lbl = Object.assign(document.createElement('span'), { textContent: name });
+      row.append(tag, lbl);
+      results.append(row);
     }
 
-    // TODO: write assertions, e.g.
-    // assert('amount accepts 12.50', RULES.amount.test('12.50'));
-    // assert('amount rejects 12.500', !RULES.amount.test('12.500'));
+    /* ---- M3 — validators (one pass + one fail per rule) ---- */
+    section('M3 — validators');
+    ok('description: valid passes', V.validateDescription('Lunch with team') === '');
+    ok('description: empty fails', V.validateDescription('  ') !== '');
+    ok('description: doubled word fails', V.validateDescription('the the bill') !== '');
+    ok('amount: 12.50 passes', V.validateAmount('12.50') === '');
+    ok('amount: -5 passes', V.validateAmount('-5') === '');
+    ok('amount: 1,250.00 passes', V.validateAmount('1,250.00') === '');
+    ok('amount: "abc" fails', V.validateAmount('abc') !== '');
+    ok('amount: zero fails', V.validateAmount('0') !== '');
+    ok('category: "Rent & Utilities" passes', V.validateCategory('Rent & Utilities') === '');
+    ok('category: digits fail', V.validateCategory('123') !== '');
+    ok('date: real date passes', V.validateDate('2026-06-01') === '');
+    ok('date: impossible date fails', V.validateDate('2026-02-31') !== '');
+    ok('date: future date fails', V.validateDate('2099-01-01') !== '');
+    ok('validateRecord: clean record valid', V.validateRecord({ description: 'X', amount: '9.99', category: 'Dining', date: '2026-06-01' }).valid === true);
+    const bad = V.validateRecord({ description: '', amount: 'x', category: '1', date: 'z' });
+    ok('validateRecord: collects all 4 errors', !bad.valid && Object.keys(bad.errors).length === 4);
 
-    out.textContent += `\n${pass} passed, ${fail} failed`;
+    /* ---- M4 — safe regex search + highlight ---- */
+    section('M4 — search & highlight');
+    const recs = [{ description: 'Grocery run', category: 'Groceries' }, { description: 'Coffee', category: 'Dining' }];
+    ok('filter: "grocer" (ignore case) -> 1', S.filterRecords(recs, 'grocer', true).list.length === 1);
+    ok('filter: "grocer" (case-sensitive) -> 0', S.filterRecords(recs, 'grocer', false).list.length === 0);
+    ok('filter: bad pattern returns ok:false', S.filterRecords(recs, '(', true).ok === false);
+    const hl = S.highlight('<b>Rent</b> & co', 'rent', true);
+    ok('highlight: escapes angle brackets', hl.includes('&lt;b&gt;') && !hl.includes('<b>'));
+    ok('highlight: escapes ampersand', hl.includes('&amp;'));
+    ok('highlight: wraps the match in <mark>', hl.includes('<mark>Rent</mark>'));
+    ok('highlight: empty pattern just escapes', S.highlight('a<b>', '') === 'a&lt;b&gt;');
+
+    /* ---- M6 — storage & state ---- */
+    section('M6 — storage & state');
+    ok('validateImport: array accepted', ST.validateImport([{ description: 'A', amount: '5', category: 'Dining', date: '2026-06-01' }]).ok === true);
+    ok('validateImport: junk rejected', ST.validateImport({ foo: 1 }).ok === false);
+    try { localStorage.removeItem('ft:records'); } catch {}
+    state.init();
+    const before = state.state.records.length;
+    const rec = state.add({ description: 'Test row', amount: '10', category: 'Dining', date: '2026-06-01' });
+    ok('state.add: appends + normalizes amount', state.state.records.length === before + 1 && rec.amount === 10);
+    state.remove(rec.id);
+    ok('state.remove: removes by id', state.state.records.length === before);
+
+    /* ---- summary ---- */
+    const s = document.getElementById('summary');
+    s.textContent = `${pass} passed, ${fail} failed`;
+    s.className = 'summary ' + (fail ? 'red' : 'green');
+    document.title = `${fail ? '✗' : '✓'} ${pass}/${pass + fail} — Finance Tracker Tests`;
+    console.log(`${pass} passed, ${fail} failed`);
   </script>
 </body>
 </html>
