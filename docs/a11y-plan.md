@@ -1,21 +1,51 @@
-# Accessibility Plan
+# Accessibility Plan & Audit
 
 ## Landmarks & headings
-Header, Navigation, Main, Dashboard Section, Records Section, Add/Edit Record Section, Settings Section, About Section, Footer.
-Heading hierarchy: H1 Finance Tracker, H2 Dashboard, Records, Add/Edit Record, Settings, About, H3 Total Records, Total Spent, Top Category.
+Header, Navigation, Main, and five sections — Dashboard, Records, Add/Edit
+Record, Settings, About — plus Footer.
+Heading hierarchy: **H1** Finance Tracker; **H2** Dashboard, Records, Add/Edit
+Record, Settings, About; **H3** Total Records, Total Spent, Top Category.
 
 ## Skip link & focus
-Skip link goes from the top of the page to the main content section. Visible focus indicators on navigation links, search box, checkbox, sort dropdown, form inputs, buttons, table actions, and import/export controls.
-Focus styling uses `:focus-visible`; default outlines are never removed without an equal or stronger replacement.
+The skip link is the first focusable element and jumps to `<main>`. Visible
+focus indicators appear on navigation links, the search box, the ignore-case
+checkbox, the sort controls, every form input, all buttons, the table
+Edit/Delete actions, and the import/export controls. Focus styling uses
+`:focus-visible` with a real `outline` (survives Windows High-Contrast mode);
+default outlines are never removed without an equal or stronger replacement.
 
 ## Live regions
-Polite: record added, updated, deleted, import/export completed, search results updated.
-Assertive: validation errors, failed import/export, spending cap exceeded warning.
-Polite is used for non-critical updates; assertive is used for errors and urgent notifications.
+- **Polite** (`#live-status`): record added/updated/deleted, import/export
+  complete, search results updated, back-under-cap.
+- **Assertive** (`#live-alert`): validation errors, failed import/export,
+  spending-cap-exceeded warning.
 
 ## Keyboard flow
-Tab order: Skip Link → Navigation → Search → Checkbox → Sort Control → Records/Table → Edit/Delete Actions → Form Fields (Description → Amount → Category → Date) → Save Button → Settings Controls → About Links.
-Enter submits forms and activates buttons. Esc closes dialogs or cancels editing mode.
+Tab order: Skip link → Navigation → Search → Ignore-case → Sort field → Sort
+direction → each record's Edit/Delete → Form fields (Description → Type
+(Expense/Income) → Amount → Category → Date) → Save → Settings controls →
+Import/Export → About links.
+`Enter` submits forms and activates buttons; `Space` toggles the checkbox and
+presses buttons; `Esc` dismisses the native confirm dialogs.
 
-## Color contrast
-Target WCAG 2.1 AA compliance: minimum 4.5:1 for normal text and 3:1 for UI components and focus indicators. Contrast will be checked using Lighthouse, WAVE, and browser accessibility tools.
+## Colour contrast — measured (WCAG 2.1 AA)
+Target: 4.5:1 normal text, 3:1 UI components and focus indicators.
+
+| Pair | Ratio | Needs |
+|---|---|---|
+| Text `#15241F` on surface | 16.1:1 | 4.5 |
+| Labels `#44544E` on surface | 8.0:1 | 4.5 |
+| Muted `#5A6862` on surface | 5.85:1 | 4.5 |
+| Figures gold `#86600F` on surface | 5.69:1 | 4.5 |
+| Positive amount `#2E7D5B` on surface | 5.0:1 | 4.5 |
+| Links/primary teal `#0E5C56` on white | 7.82:1 | 4.5 |
+| Errors `#A8362F` on surface | 6.49:1 | 4.5 |
+| Field border `#889389` on white | 3.19:1 | 3.0 |
+| Focus outline teal on white / paper | 7.82 / 7.06:1 | 3.0 |
+
+## Audit checklist
+- [ ] Keyboard-only pass: reach and operate every control, no traps
+- [ ] Screen-reader pass: landmarks, headings, live-region announcements
+- [ ] Lighthouse accessibility ≥ 95
+- [ ] WAVE: zero errors
+- [ ] `prefers-reduced-motion` verified (transitions/fade disabled)

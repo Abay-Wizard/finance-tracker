@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Finance Tracker</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
 
   <!-- Type: Space Grotesk (display), Inter (body), JetBrains Mono (figures) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -53,8 +54,14 @@
           <p class="stat-value mono" id="stat-count">0</p>
         </article>
 
+        <article class="stat-card" id="stat-net-card">
+          <p class="stat-label">Net balance</p>
+          <p class="stat-value figure" id="stat-net">0.00</p>
+          <p class="stat-foot" id="stat-net-note"></p>
+        </article>
+
         <article class="stat-card" id="stat-sum-card">
-          <p class="stat-label">Total spent</p>
+          <p class="stat-label">Spent</p>
           <p class="stat-value figure" id="stat-sum">0.00</p>
           <p class="stat-foot" id="stat-cap-note"></p>
         </article>
@@ -119,7 +126,7 @@
         <input type="hidden" id="record-id" />
 
         <div class="form-grid">
-          <div class="field">
+          <div class="field wide">
             <label for="f-desc">Description</label>
             <input type="text" id="f-desc" name="description" maxlength="120"
                    aria-describedby="f-desc-err" required />
@@ -127,26 +134,44 @@
           </div>
 
           <div class="field">
+            <span class="field-label" id="f-type-label">Type</span>
+            <div class="seg" role="radiogroup" aria-labelledby="f-type-label">
+              <input type="radio" id="f-type-expense" name="ftype" value="expense" checked />
+              <label for="f-type-expense">Expense</label>
+              <input type="radio" id="f-type-income" name="ftype" value="income" />
+              <label for="f-type-income">Income</label>
+            </div>
+          </div>
+
+          <div class="field">
             <label for="f-amount">Amount</label>
             <input type="text" id="f-amount" name="amount" inputmode="decimal"
-                   aria-describedby="f-amount-err" required />
+                   aria-describedby="f-amount-help f-amount-err" required />
+            <span class="hint" id="f-amount-help">Positive number; the toggle sets in/out.</span>
             <span class="error" id="f-amount-err"></span>
           </div>
 
           <div class="field">
             <label for="f-category">Category</label>
-            <input type="text" id="f-category" name="category" list="category-list"
+            <input type="text" id="f-category" name="category" list="cat-expense"
                    maxlength="40" aria-describedby="f-category-err" required />
-            <datalist id="category-list">
+            <datalist id="cat-expense">
               <option value="Groceries"></option>
-              <option value="Rent"></option>
+              <option value="Rent & Utilities"></option>
               <option value="Transport"></option>
               <option value="Utilities"></option>
               <option value="Dining"></option>
               <option value="Health"></option>
               <option value="Entertainment"></option>
-              <option value="Savings"></option>
-              <option value="Income"></option>
+              <option value="Shopping"></option>
+            </datalist>
+            <datalist id="cat-income">
+              <option value="Salary"></option>
+              <option value="Freelance"></option>
+              <option value="Refund"></option>
+              <option value="Gift"></option>
+              <option value="Interest"></option>
+              <option value="Investment"></option>
             </datalist>
             <span class="error" id="f-category-err"></span>
           </div>
@@ -210,10 +235,11 @@
       </form>
 
       <div class="data-actions">
+        <button type="button" class="btn ghost" id="seed-btn">Load sample data</button>
         <button type="button" class="btn ghost" id="export-btn">Export data (JSON)</button>
         <label class="btn ghost file-btn">
           Import data
-          <input type="file" id="import-input" accept="application/json,.json" hidden />
+          <input type="file" id="import-input" accept="application/json,.json" class="sr-only" />
         </label>
         <button type="button" class="btn danger ghost" id="clear-btn">Delete all records</button>
       </div>
@@ -229,9 +255,9 @@
         time you want to take it elsewhere.
       </p>
       <p class="prose contact">
-        Built by 
-        <a href="https://github.com/Abay-Wizard/finance-tracker" rel="noopener">Abay-Wizard</a> ·
-        <a href="mailto:a.tessema@alustudent.com">a.tessema@alustudent.com</a>
+        Built by <strong>you</strong>.
+        <a href="https://github.com/Abay-Wizard" rel="noopener">GitHub</a> ·
+        <a href="mailto:a.tessema@alustudent.com">Email Me</a>
       </p>
     </section>
   </main>

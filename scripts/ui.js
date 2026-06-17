@@ -1,3 +1,9 @@
+/* =========================================================================
+   ui.js
+   All DOM rendering and event binding. Reads/mutates through state.js, never
+   touches localStorage directly. Sections are tagged by milestone.
+   ========================================================================= */
+
 import * as state from "./state.js";
 import { validateRecord } from "./validators.js";
 import { filterRecords, highlight } from "./search.js";
@@ -16,6 +22,9 @@ const todayISO = () => {
     .slice(0, 10);
 };
 
+/* =======================================================================
+   M5 — live-region announcements
+   ===================================================================== */
 export function announce(msg, assertive = false) {
   const node = $(assertive ? "live-alert" : "live-status");
   node.textContent = "";
@@ -37,7 +46,9 @@ function fmtMoney(baseValue, code = state.state.ui.display) {
   }
 }
 
-
+/* =======================================================================
+   M3 — inline error messages
+   ===================================================================== */
 const FIELD_INPUT = {
   description: "f-desc",
   amount: "f-amount",
@@ -53,33 +64,50 @@ export function showErrors(errors = {}) {
   }
 }
 
-
+/* =======================================================================
+   M5 — dashboard stats + cap
+   ===================================================================== */
 let wasOverCap = false;
 
 export function renderStats() {
   const recs = state.state.records;
   const code = state.state.ui.display;
-  const sumBase = recs.reduce((t, r) => t + r.amount, 0);
+
+  // sign convention: expenses negative, income positive
+  const spent = recs.reduce((t, r) => t + (r.amount < 0 ? -r.amount : 0), 0); // gross outflow (positive)
+  const earned = recs.reduce((t, r) => t + (r.amount > 0 ? r.amount : 0), 0); // gross inflow (positive)
+  const net = earned - spent;
 
   $("stat-count").textContent = recs.length;
-  $("stat-sum").textContent = fmtMoney(sumBase, code);
 
+  // Net balance card (green positive / red negative)
+  $("stat-net").textContent = fmtMoney(net, code);
+  const netCard = $("stat-net-card");
+  netCard.classList.toggle("pos", net >= 0);
+  netCard.classList.toggle("neg", net < 0);
+  $("stat-net-note").textContent =
+    `${fmtMoney(earned, code)} in · ${fmtMoney(spent, code)} out`;
+
+  // Spent card
+  $("stat-sum").textContent = fmtMoney(spent, code);
+
+  // Top category — by spending only (expenses), so income can't be a "top spender"
   const byCat = {};
-  for (const r of recs) byCat[r.category] = (byCat[r.category] || 0) + r.amount;
-  const top = Object.entries(byCat).sort(
-    (a, b) => Math.abs(b[1]) - Math.abs(a[1]),
-  )[0];
+  for (const r of recs)
+    if (r.amount < 0) byCat[r.category] = (byCat[r.category] || 0) + -r.amount;
+  const top = Object.entries(byCat).sort((a, b) => b[1] - a[1])[0];
   $("stat-top").textContent = top ? top[0] : "—";
   $("stat-top-amount").textContent = top ? fmtMoney(top[1], code) : "";
 
+  // Cap applies to spending
   const cap = state.state.settings.cap;
-  const over = cap > 0 && sumBase > cap;
+  const over = cap > 0 && spent > cap;
   $("stat-sum-card").classList.toggle("over", over);
   const note = $("stat-cap-note");
   if (cap > 0) {
     note.textContent = over
-      ? `Over cap by ${fmtMoney(sumBase - cap, code)}`
-      : `${fmtMoney(cap - sumBase, code)} left of ${fmtMoney(cap, code)}`;
+      ? `Over cap by ${fmtMoney(spent - cap, code)}`
+      : `${fmtMoney(cap - spent, code)} left of ${fmtMoney(cap, code)}`;
     note.classList.toggle("over", over);
   } else {
     note.textContent = "No cap set";
@@ -88,10 +116,10 @@ export function renderStats() {
   // polite when easing under, assertive when crossing over
   if (over && !wasOverCap)
     announce(
-      `Heads up — your total is now over the cap of ${fmtMoney(cap, code)}.`,
+      `Heads up — your spending is now over the cap of ${fmtMoney(cap, code)}.`,
       true,
     );
-  if (!over && wasOverCap) announce("Back under your cap.");
+  if (!over && wasOverCap) announce("Back under your spending cap.");
   wasOverCap = over;
 
   renderChart(recs, code);
@@ -112,8 +140,9 @@ function renderChart(recs, code) {
     });
   }
   for (const r of recs) {
+    if (r.amount >= 0) continue; // chart shows daily spending (outflow) only
     const day = days.find((x) => x.iso === r.date);
-    if (day) day.total += Math.abs(r.amount);
+    if (day) day.total += -r.amount;
   }
   const max = Math.max(...days.map((d) => d.total), 1);
 
@@ -139,7 +168,9 @@ function renderChart(recs, code) {
     days.map((d) => `${d.iso} ${fmtMoney(d.total, code)}`).join(", ");
 }
 
-
+/* =======================================================================
+   M4 — render records (filter -> sort -> table/cards) + highlight
+   ===================================================================== */
 function sortRecords(list) {
   const { sortField: f, sortDir: dir } = state.state.ui;
   const mul = dir === "asc" ? 1 : -1;
@@ -238,7 +269,7 @@ function recordRow(r, search, ci) {
   tdAmt.dataset.label = "Amount";
   tdAmt.append(
     el("span", {
-      className: "amount-fig" + (r.amount < 0 ? " neg" : ""),
+      className: "amount-fig" + (r.amount > 0 ? " in" : ""),
       textContent: fmtMoney(r.amount),
     }),
   );
@@ -269,19 +300,37 @@ function recordRow(r, search, ci) {
   return tr;
 }
 
-
+/* =======================================================================
+   M4 — refresh = get -> filter -> sort -> render (+ stats)
+   ===================================================================== */
 export function refresh() {
   renderStats();
   renderRecords();
 }
 
+/* =======================================================================
+   M3/M6 — form (add / edit)
+   ===================================================================== */
 function readForm() {
   return {
     description: $("f-desc").value.trim(),
-    amount: $("f-amount").value.trim(),
+    amount: $("f-amount").value.trim(), // positive magnitude; toggle owns the sign
     category: $("f-category").value.trim(),
     date: $("f-date").value,
   };
+}
+
+const formType = () => ($("f-type-income").checked ? "income" : "expense");
+function syncCategoryList() {
+  $("f-category").setAttribute(
+    "list",
+    formType() === "income" ? "cat-income" : "cat-expense",
+  );
+}
+function setFormType(t) {
+  $("f-type-income").checked = t === "income";
+  $("f-type-expense").checked = t !== "income";
+  syncCategoryList();
 }
 
 function onSubmitForm(e) {
@@ -294,12 +343,17 @@ function onSubmitForm(e) {
     return;
   }
 
+  // apply the sign: expense negative, income positive
+  const magnitude = Number(data.amount.replace(/,/g, ""));
+  const signed = formType() === "income" ? magnitude : -magnitude;
+  const record = { ...data, amount: signed };
+
   const id = $("record-id").value;
   if (id) {
-    state.update(id, data);
+    state.update(id, record);
     announce("Record updated.");
   } else {
-    state.add(data);
+    state.add(record);
     announce("Record added.");
   }
   resetForm();
@@ -312,7 +366,8 @@ function startEdit(id) {
   if (!r) return;
   $("record-id").value = r.id;
   $("f-desc").value = r.description;
-  $("f-amount").value = r.amount;
+  setFormType(r.amount > 0 ? "income" : "expense");
+  $("f-amount").value = Math.abs(r.amount); // show positive magnitude
   $("f-category").value = r.category;
   $("f-date").value = r.date;
   $("form-submit").textContent = "Save changes";
@@ -334,13 +389,16 @@ function removeRecord(id) {
 function resetForm() {
   $("record-form").reset();
   $("record-id").value = "";
+  setFormType("expense");
   $("f-date").value = todayISO();
   $("form-submit").textContent = "Add record";
   $("form-mode").textContent = "";
   showErrors({});
 }
 
-
+/* =======================================================================
+   M6 — settings, import / export, clear
+   ===================================================================== */
 function fillSettings() {
   const s = state.state.settings;
   $("s-cap").value = s.cap || "";
@@ -455,7 +513,43 @@ function clearAll() {
   announce("All records deleted.");
 }
 
+async function loadSeed() {
+  let data;
+  try {
+    const res = await fetch("./seed.json", { cache: "no-store" });
+    if (!res.ok) throw new Error("http");
+    data = await res.json();
+  } catch {
+    announce(
+      "Could not load seed.json — make sure the app is served over HTTP.",
+      true,
+    );
+    return;
+  }
+  const out = validateImport(data);
+  if (!out.ok) {
+    announce(out.error, true);
+    return;
+  }
+  if (
+    !confirm(
+      `Load ${out.records.length} sample record(s)? This replaces what you have now.`,
+    )
+  )
+    return;
+  state.setRecords(out.records);
+  if (out.settings) {
+    state.setSettings(out.settings);
+    fillSettings();
+    fillCurrencyOptions();
+  }
+  refresh();
+  announce(`Loaded ${out.records.length} sample record(s).`);
+}
 
+/* =======================================================================
+   M4/M6 — event binding + scroll spy + boot helpers
+   ===================================================================== */
 let searchTimer;
 export function bindEvents() {
   $("record-form").addEventListener("submit", onSubmitForm);
@@ -463,6 +557,8 @@ export function bindEvents() {
     resetForm();
     announce("Form cleared.");
   });
+  $("f-type-expense").addEventListener("change", syncCategoryList);
+  $("f-type-income").addEventListener("change", syncCategoryList);
 
   $("records-host").addEventListener("click", (e) => {
     const btn = e.target.closest("[data-act]");
@@ -501,6 +597,7 @@ export function bindEvents() {
 
   $("settings-form").addEventListener("submit", onSaveSettings);
   $("export-btn").addEventListener("click", exportData);
+  $("seed-btn").addEventListener("click", loadSeed);
   $("clear-btn").addEventListener("click", clearAll);
   $("import-input").addEventListener("change", (e) => {
     if (e.target.files[0]) importData(e.target.files[0]);
