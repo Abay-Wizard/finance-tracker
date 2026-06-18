@@ -5,9 +5,8 @@ records live in your browser's `localStorage` and can be exported any time.
 Search with regular expressions, set a spending cap, and convert between
 currencies with manual rates.
 
-> **Live demo:** _add your GitHub Pages URL here after deploying (M7)._
-
-![Dashboard screenshot](assets/screenshot-dashboard.png)
+> **Live demo:** https://abay-wizard.github.io/finance-tracker/
+> **Demo video:** https://youtu.be/96xDBLoql2w
 
 ## Features
 - Add / edit / delete records (description, amount, category, date)
